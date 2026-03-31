@@ -1,5 +1,4 @@
 <script>
-  import interact from 'interactjs';
   import { onDestroy, onMount } from 'svelte';
   import Toolbar from './Toolbar.svelte';
   import {
@@ -11,20 +10,18 @@
     updateObject,
   } from '$lib/services/boardService';
 
-  export let rows = 12;
-  export let cols = 16;
-  export let cellSize = 48;
+  let { rows = 12, cols = 16, cellSize = 48 } = $props();
 
   const STORAGE_KEY = 'questboard.board';
   const SAVE_THROTTLE_MS = 250;
 
-  let board = createBoard({ rows, cols, cellSize });
-  let saveTimer;
-  let selectedObjectId = null;
+  let board = $state(createBoard({ rows, cols, cellSize }));
+  let saveTimer = null;
+  let selectedObjectId = $state(null);
 
-  $: boardWidth = cols * cellSize;
-  $: boardHeight = rows * cellSize;
-  $: gridCells = Array.from({ length: rows * cols }, (_, index) => index);
+  let boardWidth = $derived(cols * cellSize);
+  let boardHeight = $derived(rows * cellSize);
+  let gridCells = $derived(Array.from({ length: rows * cols }, (_, index) => index));
 
   onMount(() => {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -49,9 +46,11 @@
     clearTimeout(saveTimer);
   });
 
-  $: if (board) {
-    throttleSave();
-  }
+  $effect(() => {
+    if (board) {
+      throttleSave();
+    }
+  });
 
   function migrateBoardCoordinates(inputBoard) {
     const unit = inputBoard?.meta?.coordinateUnit ?? 'cell';
@@ -114,41 +113,89 @@
   }
 
   function makeObjectDraggable(node, objId) {
-    const interaction = interact(node)
-      .draggable({
-        listeners: {
-          move(event) {
-            const current = getObjectById(objId);
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let initialObjX = 0;
+    let initialObjY = 0;
+    
+    let holdTimer = null;
+    let lastTapTime = 0;
 
-            if (!current) {
-              return;
-            }
+    function onPointerDown(e) {
+      if (!e.isPrimary) return;
+      
+      // Capture the pointer to not lose tracking if user drags really fast outside the element
+      node.setPointerCapture(e.pointerId);
+      
+      const obj = getObjectById(objId);
+      if (!obj) return;
 
-            const next = clampObjectPosition(
-              current,
-              (current.x ?? 0) + event.dx,
-              (current.y ?? 0) + event.dy,
-            );
-
-            board = updateObject(board, objId, next);
-          },
-          end() {
-            snapToGrid(objId);
-          },
-        },
-      })
-      .pointerEvents({ holdDuration: 450 })
-      .on('doubletap', () => {
+      const now = Date.now();
+      
+      // Double tap to select
+      if (now - lastTapTime < 300) {
         selectedObjectId = objId;
-      })
-      .on('hold', () => {
+      }
+      lastTapTime = now;
+
+      // Hold to select
+      holdTimer = setTimeout(() => {
         selectedObjectId = objId;
-      });
+      }, 450);
+
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      initialObjX = obj.x ?? 0;
+      initialObjY = obj.y ?? 0;
+    }
+
+    function onPointerMove(e) {
+      if (!isDragging) return;
+      
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+
+      // Debounce hold: if the pointer moved a bit, the user intends to drag, not hold.
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        clearTimeout(holdTimer);
+      }
+
+      const next = clampObjectPosition(
+        getObjectById(objId),
+        initialObjX + dx,
+        initialObjY + dy
+      );
+
+      board = updateObject(board, objId, next);
+    }
+
+    function onPointerUp(e) {
+      if (!isDragging) return;
+      isDragging = false;
+      clearTimeout(holdTimer);
+      try {
+        if (node.hasPointerCapture(e.pointerId)) {
+          node.releasePointerCapture(e.pointerId);
+        }
+      } catch (err) {}
+      snapToGrid(objId);
+    }
+
+    node.addEventListener('pointerdown', onPointerDown);
+    node.addEventListener('pointermove', onPointerMove);
+    node.addEventListener('pointerup', onPointerUp);
+    node.addEventListener('pointercancel', onPointerUp);
 
     return {
       destroy() {
-        interaction.unset();
-      },
+        node.removeEventListener('pointerdown', onPointerDown);
+        node.removeEventListener('pointermove', onPointerMove);
+        node.removeEventListener('pointerup', onPointerUp);
+        node.removeEventListener('pointercancel', onPointerUp);
+        clearTimeout(holdTimer);
+      }
     };
   }
 
