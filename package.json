@@ -11,6 +11,9 @@
 		"lint": "eslint . && prettier --check .",
 		"format": "prettier --write ."
 	},
+	"dependencies": {
+		"interactjs": "^1.10.27"
+	},
 	"devDependencies": {
 		"@eslint/compat": "^1.4.0",
 		"@eslint/js": "^9.39.1",
