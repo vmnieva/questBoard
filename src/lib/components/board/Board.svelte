@@ -1,11 +1,14 @@
 <script>
-  import { onMount } from 'svelte';
+  import interact from 'interactjs';
+  import { onDestroy, onMount } from 'svelte';
   import Toolbar from './Toolbar.svelte';
   import {
     addObject,
     createBoard,
     deserialize,
+    removeObject,
     serialize,
+    updateObject,
   } from '$lib/services/boardService';
 
   export let rows = 12;
@@ -17,6 +20,7 @@
 
   let board = createBoard({ rows, cols, cellSize });
   let saveTimer;
+  let selectedObjectId = null;
 
   $: boardWidth = cols * cellSize;
   $: boardHeight = rows * cellSize;
@@ -29,7 +33,7 @@
       try {
         const parsed = deserialize(raw);
         if (parsed?.meta && Array.isArray(parsed?.objects)) {
-          board = parsed;
+          board = migrateBoardCoordinates(parsed);
         }
       } catch {
         // ignore malformed data and keep default board
@@ -41,8 +45,33 @@
     };
   });
 
+  onDestroy(() => {
+    clearTimeout(saveTimer);
+  });
+
   $: if (board) {
     throttleSave();
+  }
+
+  function migrateBoardCoordinates(inputBoard) {
+    const unit = inputBoard?.meta?.coordinateUnit ?? 'cell';
+
+    if (unit === 'px') {
+      return inputBoard;
+    }
+
+    return {
+      ...inputBoard,
+      meta: {
+        ...inputBoard.meta,
+        coordinateUnit: 'px',
+      },
+      objects: inputBoard.objects.map((obj) => ({
+        ...obj,
+        x: (obj.x ?? 0) * cellSize,
+        y: (obj.y ?? 0) * cellSize,
+      })),
+    };
   }
 
   function throttleSave() {
@@ -52,8 +81,92 @@
     }, SAVE_THROTTLE_MS);
   }
 
+  function getObjectById(objId) {
+    return board.objects.find((obj) => obj.id === objId);
+  }
+
+  function clampObjectPosition(obj, rawX, rawY) {
+    const width = (obj.w ?? 1) * cellSize;
+    const height = (obj.h ?? 1) * cellSize;
+    const maxX = Math.max(0, boardWidth - width);
+    const maxY = Math.max(0, boardHeight - height);
+
+    return {
+      x: Math.min(Math.max(0, rawX), maxX),
+      y: Math.min(Math.max(0, rawY), maxY),
+    };
+  }
+
+  function snapToGrid(objId) {
+    const current = getObjectById(objId);
+
+    if (!current) {
+      return;
+    }
+
+    const snapped = clampObjectPosition(
+      current,
+      Math.round((current.x ?? 0) / cellSize) * cellSize,
+      Math.round((current.y ?? 0) / cellSize) * cellSize,
+    );
+
+    board = updateObject(board, objId, snapped);
+  }
+
+  function makeObjectDraggable(node, objId) {
+    const interaction = interact(node)
+      .draggable({
+        listeners: {
+          move(event) {
+            const current = getObjectById(objId);
+
+            if (!current) {
+              return;
+            }
+
+            const next = clampObjectPosition(
+              current,
+              (current.x ?? 0) + event.dx,
+              (current.y ?? 0) + event.dy,
+            );
+
+            board = updateObject(board, objId, next);
+          },
+          end() {
+            snapToGrid(objId);
+          },
+        },
+      })
+      .pointerEvents({ holdDuration: 450 })
+      .on('doubletap', () => {
+        selectedObjectId = objId;
+      })
+      .on('hold', () => {
+        selectedObjectId = objId;
+      });
+
+    return {
+      destroy() {
+        interaction.unset();
+      },
+    };
+  }
+
   function handleAddObject(obj) {
-    board = addObject(board, obj);
+    board = addObject(board, {
+      ...obj,
+      x: (obj.x ?? 0) * cellSize,
+      y: (obj.y ?? 0) * cellSize,
+    });
+  }
+
+  function handleDeleteSelected() {
+    if (!selectedObjectId) {
+      return;
+    }
+
+    board = removeObject(board, selectedObjectId);
+    selectedObjectId = null;
   }
 </script>
 
@@ -72,10 +185,22 @@
 
     {#each board.objects as obj (obj.id)}
       <article
-        class={`board-object object-${obj.type}`}
-        style={`left:${obj.x * cellSize}px; top:${obj.y * cellSize}px; width:${(obj.w ?? 1) * cellSize}px; height:${(obj.h ?? 1) * cellSize}px;`}
+        class={`board-object object-${obj.type} ${selectedObjectId === obj.id ? 'selected' : ''}`}
+        style={`left:${obj.x}px; top:${obj.y}px; width:${(obj.w ?? 1) * cellSize}px; height:${(obj.h ?? 1) * cellSize}px;`}
+        use:makeObjectDraggable={obj.id}
       >
         {obj.label ?? obj.type}
+
+        {#if selectedObjectId === obj.id}
+          <button
+            class="delete-btn"
+            type="button"
+            on:click|stopPropagation={handleDeleteSelected}
+            aria-label={`Eliminar ${obj.label ?? obj.type}`}
+          >
+            Eliminar
+          </button>
+        {/if}
       </article>
     {/each}
   </div>
@@ -103,6 +228,7 @@
     display: grid;
     border: 1px solid #d5dde9;
     background: #f8fafc;
+    touch-action: none;
   }
 
   .grid-cell {
@@ -120,7 +246,27 @@
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: capitalize;
-    pointer-events: none;
+    user-select: none;
+    touch-action: none;
+  }
+
+  .board-object.selected {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+
+  .delete-btn {
+    position: absolute;
+    top: -0.55rem;
+    right: -0.55rem;
+    border: 1px solid #b91c1c;
+    background: #ef4444;
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.625rem;
+    padding: 0.125rem 0.35rem;
+    cursor: pointer;
+    text-transform: none;
   }
 
   .object-wall {
