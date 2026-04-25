@@ -6,11 +6,12 @@
     createBoard,
     deserialize,
     removeObject,
+    clearObjects,
     serialize,
     updateObject,
   } from '$lib/services/boardService';
 
-  let { rows = 12, cols = 16, cellSize = 48 } = $props();
+  let { rows = 12, cols = 16, cellSize = 50 } = $props();
 
   const STORAGE_KEY = 'questboard.board';
   const SAVE_THROTTLE_MS = 250;
@@ -202,8 +203,8 @@
   function handleAddObject(obj) {
     board = addObject(board, {
       ...obj,
-      x: (obj.x ?? 0) * cellSize,
-      y: (obj.y ?? 0) * cellSize,
+      x: obj.x ?? 0,
+      y: obj.y ?? 0,
     });
   }
 
@@ -213,6 +214,11 @@
     }
 
     board = removeObject(board, selectedObjectId);
+    selectedObjectId = null;
+  }
+
+  function handleClearAll() {
+    board = clearObjects(board);
     selectedObjectId = null;
   }
 </script>
@@ -242,7 +248,10 @@
           <button
             class="delete-btn"
             type="button"
-            on:click|stopPropagation={handleDeleteSelected}
+            onclick={(e) => {
+              e.stopPropagation();
+              handleDeleteSelected();
+            }}
             aria-label={`Eliminar ${obj.label ?? obj.type}`}
           >
             Eliminar
@@ -252,7 +261,7 @@
     {/each}
   </div>
 
-  <Toolbar onAdd={handleAddObject} />
+  <Toolbar onAdd={handleAddObject} onClear={handleClearAll} />
 </section>
 
 <style>
@@ -295,6 +304,8 @@
     text-transform: capitalize;
     user-select: none;
     touch-action: none;
+    /* Reducimos su tamaño visual de forma centrada */
+    transform: scale(0.97); 
   }
 
   .board-object.selected {
