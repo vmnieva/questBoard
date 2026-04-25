@@ -1,5 +1,5 @@
 <script>
-  import { createObject } from '$lib/services/boardService.svelte';
+  import { createObject } from '$lib/services/boardService.svelte.js';
 
   let { onAdd, onClear } = $props();
 
