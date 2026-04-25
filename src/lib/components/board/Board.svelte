@@ -9,7 +9,7 @@
     updateObject,
     deselectToken,
     selectToken,
-  } from '$lib/services/boardService.svelte';
+  } from '$lib/services/boardService.svelte.js';
 
   let { rows = 11, cols = 15, cellSize = 50 } = $props();
 
@@ -64,7 +64,7 @@
     let lastY = 0;
     let initialObjX = 0;
     let initialObjY = 0;
-    
+
     let lastTapTime = 0;
 
     function onPointerDown(e) {

@@ -1,5 +1,5 @@
 <script>
-  import { uiState, selectToken } from '$lib/services/boardService.svelte';
+  import { uiState, selectToken } from '$lib/services/boardService.svelte.js';
 
   // El token recibido debe ser reactivo (un $state creado en un store o un proxy).
   // Svelte 5 nos permite mutar este objeto profundamente y la UI lo registrará.

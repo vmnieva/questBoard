@@ -4,7 +4,7 @@
     boardState,
     deselectToken,
     removeObject,
-  } from '$lib/services/boardService.svelte';
+  } from '$lib/services/boardService.svelte.js';
 
   // Derivamos el objeto actual (ficha, muro, puerta o nota)
   let selectedToken = $derived(
