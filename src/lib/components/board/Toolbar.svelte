@@ -1,30 +1,25 @@
 <script>
-  export let onAdd = () => {};
+  import { createObject } from '$lib/services/boardService';
+
+  let { onAdd, onClear } = $props();
 
   const TOOL_TYPES = ['wall', 'door', 'token', 'note'];
 
-  function createDefaultObject(type) {
-    return {
-      type,
-      x: 0,
-      y: 0,
-      w: 1,
-      h: 1,
-      label: type === 'note' ? 'Nota' : undefined,
-    };
-  }
-
   function handleAdd(type) {
-    onAdd(createDefaultObject(type));
+    onAdd(createObject(type));
   }
 </script>
 
 <nav class="toolbar" aria-label="Board toolbar">
   {#each TOOL_TYPES as type (type)}
-    <button type="button" class="tool-btn" on:click={() => handleAdd(type)}>
+    <button type="button" class="tool-btn" onclick={() => handleAdd(type)}>
       {type[0].toUpperCase() + type.slice(1)}
     </button>
   {/each}
+
+  <button type="button" class="tool-btn clear-btn" onclick={onClear}>
+    Limpiar All
+  </button>
 </nav>
 
 <style>
@@ -55,5 +50,14 @@
 
   .tool-btn:hover {
     background: #f8fafc;
+  }
+
+  .clear-btn {
+    border-color: #ef4444;
+    color: #ef4444;
+  }
+  
+  .clear-btn:hover {
+    background: #fef2f2;
   }
 </style>
