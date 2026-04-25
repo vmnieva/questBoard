@@ -74,7 +74,6 @@ $effect.root(() => {
 });
 
 export function createObject(type) {
-  const randomColor = type === 'token' ? '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0') : undefined;
   return {
     id: uuid(),
     type,
@@ -82,7 +81,7 @@ export function createObject(type) {
     y: 0,
     w: 1,
     h: 1,
-    color: randomColor,
+    color: undefined,
     label: type === 'note' ? 'Nota' : undefined,
   };
 }
