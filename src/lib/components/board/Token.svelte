@@ -1,4 +1,6 @@
 <script>
+  import { uiState, selectToken } from '$lib/services/boardService.svelte';
+
   // El token recibido debe ser reactivo (un $state creado en un store o un proxy).
   // Svelte 5 nos permite mutar este objeto profundamente y la UI lo registrará.
   let { token } = $props();
@@ -46,15 +48,25 @@
       }
     } catch {}
 
-    // LÓGICA MATEMÁTICA: Snap-to-Grid + Boundaries (Mínimo 0)
-    token.x = Math.max(0, Math.round(token.x / GRID_SIZE) * GRID_SIZE);
-    token.y = Math.max(0, Math.round(token.y / GRID_SIZE) * GRID_SIZE);
+    // Distinguir entre "tap" y "drag"
+    const distanceX = Math.abs(e.clientX - startX);
+    const distanceY = Math.abs(e.clientY - startY);
+    
+    if (distanceX <= 3 && distanceY <= 3) {
+      // Fue un clic rápido / tap -> Seleccionar
+      selectToken(token.id);
+    } else {
+      // Fue un arrastre -> Snap-to-Grid + Boundaries (Mínimo 0)
+      token.x = Math.max(0, Math.round(token.x / GRID_SIZE) * GRID_SIZE);
+      token.y = Math.max(0, Math.round(token.y / GRID_SIZE) * GRID_SIZE);
+    }
   }
 </script>
 
 <!-- Renderizado UI con performace basada en translate3d -->
 <div
   class="token"
+  class:selected={uiState.selectedTokenId === token.id}
   style="transform: translate3d({token.x}px, {token.y}px, 0); background-color: {token.color || '#3b82f6'};"
   onpointerdown={onPointerDown}
   onpointermove={onPointerMove}
@@ -96,5 +108,13 @@
   .token:active {
     transition: none;
     z-index: 10;
+  }
+
+  /* Borde brillante cuando el token está seleccionado */
+  .token.selected {
+    outline: 3px solid #fde047; /* Amarillo brillante */
+    outline-offset: 2px;
+    box-shadow: 0 0 10px rgba(253, 224, 71, 0.6);
+    z-index: 5;
   }
 </style>

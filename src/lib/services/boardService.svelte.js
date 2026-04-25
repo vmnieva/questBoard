@@ -44,6 +44,19 @@ export const boardState = $state(rawData);
 
 let saveTimer = null;
 
+// UI State (no persistente)
+export const uiState = $state({
+  selectedTokenId: null
+});
+
+export function selectToken(id) {
+  uiState.selectedTokenId = id;
+}
+
+export function deselectToken() {
+  uiState.selectedTokenId = null;
+}
+
 function throttleSave() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
@@ -61,7 +74,6 @@ $effect.root(() => {
 });
 
 export function createObject(type) {
-  const randomColor = type === 'token' ? '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0') : undefined;
   return {
     id: uuid(),
     type,
@@ -69,7 +81,7 @@ export function createObject(type) {
     y: 0,
     w: 1,
     h: 1,
-    color: randomColor,
+    color: undefined,
     label: type === 'note' ? 'Nota' : undefined,
   };
 }

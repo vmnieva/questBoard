@@ -2,27 +2,34 @@
   import Toolbar from './Toolbar.svelte';
   import {
     boardState,
+    uiState,
     addObject,
     removeObject,
     clearObjects,
     updateObject,
+    deselectToken,
   } from '$lib/services/boardService.svelte';
 
-  let { rows = 12, cols = 16, cellSize = 50 } = $props();
+  let { rows = 11, cols = 15, cellSize = 50 } = $props();
 
-  let selectedObjectId = $state(null);
+  let effectiveCols = $derived(boardState.meta?.cols ?? cols);
+  let effectiveRows = $derived(boardState.meta?.rows ?? rows);
+  let effectiveCellSize = $derived(boardState.meta?.cellSize ?? cellSize);
 
-  let boardWidth = $derived((boardState.meta?.cols ?? cols) * (boardState.meta?.cellSize ?? cellSize));
-  let boardHeight = $derived((boardState.meta?.rows ?? rows) * (boardState.meta?.cellSize ?? cellSize));
-  let gridCells = $derived(Array.from({ length: (boardState.meta?.rows ?? rows) * (boardState.meta?.cols ?? cols) }, (_, index) => index));
+  let boardWidth = $derived(effectiveCols * effectiveCellSize);
+  let boardHeight = $derived(effectiveRows * effectiveCellSize);
+
+  let gridCells = $derived(
+    Array.from({ length: effectiveRows * effectiveCols }, (_, index) => index),
+  );
 
   function getObjectById(objId) {
     return boardState.objects.find((obj) => obj.id === objId);
   }
 
   function clampObjectPosition(obj, rawX, rawY) {
-    const width = (obj.w ?? 1) * cellSize;
-    const height = (obj.h ?? 1) * cellSize;
+    const width = (obj.w ?? 1) * effectiveCellSize;
+    const height = (obj.h ?? 1) * effectiveCellSize;
     const maxX = Math.max(0, boardWidth - width);
     const maxY = Math.max(0, boardHeight - height);
 
@@ -41,8 +48,8 @@
 
     const snapped = clampObjectPosition(
       current,
-      Math.round((current.x ?? 0) / cellSize) * cellSize,
-      Math.round((current.y ?? 0) / cellSize) * cellSize,
+      Math.round((current.x ?? 0) / effectiveCellSize) * effectiveCellSize,
+      Math.round((current.y ?? 0) / effectiveCellSize) * effectiveCellSize,
     );
 
     updateObject(objId, snapped);
@@ -54,31 +61,18 @@
     let startY = 0;
     let initialObjX = 0;
     let initialObjY = 0;
-    
-    let holdTimer = null;
-    let lastTapTime = 0;
+
+    let tapCount = 0;
+    let tapTimer = null;
 
     function onPointerDown(e) {
       if (!e.isPrimary) return;
-      
+
       // Capture the pointer to not lose tracking if user drags really fast outside the element
       node.setPointerCapture(e.pointerId);
-      
+
       const obj = getObjectById(objId);
       if (!obj) return;
-
-      const now = Date.now();
-      
-      // Double tap to select
-      if (now - lastTapTime < 300) {
-        selectedObjectId = objId;
-      }
-      lastTapTime = now;
-
-      // Hold to select
-      holdTimer = setTimeout(() => {
-        selectedObjectId = objId;
-      }, 450);
 
       isDragging = true;
       startX = e.clientX;
@@ -89,19 +83,15 @@
 
     function onPointerMove(e) {
       if (!isDragging) return;
-      
+
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
 
-      // Debounce hold: if the pointer moved a bit, the user intends to drag, not hold.
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-        clearTimeout(holdTimer);
-      }
-
+      // Es un arrastre -> calcular nueva posición ajustada a grid
       const next = clampObjectPosition(
         getObjectById(objId),
         initialObjX + dx,
-        initialObjY + dy
+        initialObjY + dy,
       );
 
       updateObject(objId, next);
@@ -110,12 +100,26 @@
     function onPointerUp(e) {
       if (!isDragging) return;
       isDragging = false;
-      clearTimeout(holdTimer);
       try {
         if (node.hasPointerCapture(e.pointerId)) {
           node.releasePointerCapture(e.pointerId);
         }
       } catch (err) {}
+
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+
+      if (Math.abs(dx) <= 3 && Math.abs(dy) <= 3) {
+        tapCount++;
+        if (tapCount === 1) {
+          tapTimer = setTimeout(() => (tapCount = 0), 300);
+        } else if (tapCount === 2) {
+          clearTimeout(tapTimer);
+          tapCount = 0;
+          uiState.selectedTokenId = objId;
+        }
+      }
+
       snapToGrid(objId);
     }
 
@@ -130,8 +134,8 @@
         node.removeEventListener('pointermove', onPointerMove);
         node.removeEventListener('pointerup', onPointerUp);
         node.removeEventListener('pointercancel', onPointerUp);
-        clearTimeout(holdTimer);
-      }
+        clearTimeout(tapTimer);
+      },
     };
   }
 
@@ -143,18 +147,9 @@
     });
   }
 
-  function handleDeleteSelected() {
-    if (!selectedObjectId) {
-      return;
-    }
-
-    removeObject(selectedObjectId);
-    selectedObjectId = null;
-  }
-
   function handleClearAll() {
     clearObjects();
-    selectedObjectId = null;
+    deselectToken();
   }
 </script>
 
@@ -164,7 +159,7 @@
 >
   <div
     class="board-grid"
-    style={`grid-template-columns: repeat(${cols}, ${cellSize}px); grid-template-rows: repeat(${rows}, ${cellSize}px);`}
+    style={`grid-template-columns: repeat(${effectiveCols}, ${effectiveCellSize}px); grid-template-rows: repeat(${effectiveRows}, ${effectiveCellSize}px);`}
     aria-label="Grid board"
   >
     {#each gridCells as index (index)}
@@ -173,25 +168,11 @@
 
     {#each boardState.objects as obj (obj.id)}
       <article
-        class={`board-object object-${obj.type} ${selectedObjectId === obj.id ? 'selected' : ''}`}
-        style={`left:${obj.x}px; top:${obj.y}px; width:${(obj.w ?? 1) * cellSize}px; height:${(obj.h ?? 1) * cellSize}px;`}
+        class={`board-object object-${obj.type} ${uiState.selectedTokenId === obj.id ? 'selected' : ''}`}
+        style={`left:${obj.x}px; top:${obj.y}px; width:${(obj.w ?? 1) * effectiveCellSize}px; height:${(obj.h ?? 1) * effectiveCellSize}px; background-color: ${obj.color || ''};`}
         use:makeObjectDraggable={obj.id}
       >
         {obj.label ?? obj.type}
-
-        {#if selectedObjectId === obj.id}
-          <button
-            class="delete-btn"
-            type="button"
-            onclick={(e) => {
-              e.stopPropagation();
-              handleDeleteSelected();
-            }}
-            aria-label={`Eliminar ${obj.label ?? obj.type}`}
-          >
-            Eliminar
-          </button>
-        {/if}
       </article>
     {/each}
   </div>
@@ -202,10 +183,10 @@
 <style>
   .board-shell {
     position: relative;
-    width: calc(var(--board-width) + 2rem);
+    width: calc(var(--board-width) + 0.25rem);
     max-width: 100%;
-    min-height: calc(var(--board-height) + 5rem);
-    padding: 1rem 1rem 4.25rem;
+    min-height: calc(var(--board-height) + 4rem);
+    padding: 1rem 1rem 1rem;
     border: 1px solid #cbd5e1;
     border-radius: 1rem;
     background: #ffffff;
@@ -214,6 +195,7 @@
 
   .board-grid {
     position: relative;
+    box-sizing: content-box;
     width: var(--board-width);
     height: var(--board-height);
     display: grid;
@@ -240,26 +222,12 @@
     user-select: none;
     touch-action: none;
     /* Reducimos su tamaño visual de forma centrada */
-    transform: scale(0.97); 
+    transform: scale(0.97);
   }
 
   .board-object.selected {
     outline: 2px solid #2563eb;
     outline-offset: 2px;
-  }
-
-  .delete-btn {
-    position: absolute;
-    top: -0.55rem;
-    right: -0.55rem;
-    border: 1px solid #b91c1c;
-    background: #ef4444;
-    color: #fff;
-    border-radius: 999px;
-    font-size: 0.625rem;
-    padding: 0.125rem 0.35rem;
-    cursor: pointer;
-    text-transform: none;
   }
 
   .object-wall {
@@ -281,6 +249,5 @@
   .object-note {
     background: #fef08a;
     color: #713f12;
-    border-color: #facc15;
   }
 </style>
