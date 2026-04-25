@@ -1,6 +1,5 @@
 <script>
   import Toolbar from './Toolbar.svelte';
-  import Token from './Token.svelte';
   import {
     boardState,
     uiState,
@@ -56,8 +55,8 @@
     let initialObjX = 0;
     let initialObjY = 0;
     
-    let holdTimer = null;
-    let lastTapTime = 0;
+    let tapCount = 0;
+    let tapTimer = null;
 
     function onPointerDown(e) {
       if (!e.isPrimary) return;
@@ -67,19 +66,6 @@
       
       const obj = getObjectById(objId);
       if (!obj) return;
-
-      const now = Date.now();
-      
-      // Double tap to select
-      if (now - lastTapTime < 300) {
-        uiState.selectedTokenId = objId;
-      }
-      lastTapTime = now;
-
-      // Hold to select
-      holdTimer = setTimeout(() => {
-        uiState.selectedTokenId = objId;
-      }, 450);
 
       isDragging = true;
       startX = e.clientX;
@@ -94,11 +80,7 @@
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
 
-      // Debounce hold: if the pointer moved a bit, the user intends to drag, not hold.
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-        clearTimeout(holdTimer);
-      }
-
+      // Es un arrastre -> calcular nueva posición ajustada a grid
       const next = clampObjectPosition(
         getObjectById(objId),
         initialObjX + dx,
@@ -111,12 +93,26 @@
     function onPointerUp(e) {
       if (!isDragging) return;
       isDragging = false;
-      clearTimeout(holdTimer);
       try {
         if (node.hasPointerCapture(e.pointerId)) {
           node.releasePointerCapture(e.pointerId);
         }
       } catch (err) {}
+
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+
+      if (Math.abs(dx) <= 3 && Math.abs(dy) <= 3) {
+        tapCount++;
+        if (tapCount === 1) {
+          tapTimer = setTimeout(() => tapCount = 0, 300);
+        } else if (tapCount === 2) {
+          clearTimeout(tapTimer);
+          tapCount = 0;
+          uiState.selectedTokenId = objId;
+        }
+      }
+
       snapToGrid(objId);
     }
 
@@ -131,7 +127,7 @@
         node.removeEventListener('pointermove', onPointerMove);
         node.removeEventListener('pointerup', onPointerUp);
         node.removeEventListener('pointercancel', onPointerUp);
-        clearTimeout(holdTimer);
+        clearTimeout(tapTimer);
       }
     };
   }
@@ -142,15 +138,6 @@
       x: obj.x ?? 0,
       y: obj.y ?? 0,
     });
-  }
-
-  function handleDeleteSelected() {
-    if (!uiState.selectedTokenId) {
-      return;
-    }
-
-    removeObject(uiState.selectedTokenId);
-    deselectToken();
   }
 
   function handleClearAll() {
@@ -173,46 +160,13 @@
     {/each}
 
     {#each boardState.objects as obj (obj.id)}
-      {#if obj.type === 'token'}
-        <Token token={obj} />
-        
-        {#if uiState.selectedTokenId === obj.id}
-          <button
-            class="delete-btn"
-            style="top: {obj.y - 10}px; left: {obj.x + 35}px; z-index: 20;"
-            type="button"
-            onclick={(e) => {
-              e.stopPropagation();
-              handleDeleteSelected();
-            }}
-            aria-label="Eliminar Token"
-          >
-            Eliminar
-          </button>
-        {/if}
-      {:else}
-        <article
-          class={`board-object object-${obj.type} ${uiState.selectedTokenId === obj.id ? 'selected' : ''}`}
-          style={`left:${obj.x}px; top:${obj.y}px; width:${(obj.w ?? 1) * cellSize}px; height:${(obj.h ?? 1) * cellSize}px;`}
-          use:makeObjectDraggable={obj.id}
-        >
-          {obj.label ?? obj.type}
-
-          {#if uiState.selectedTokenId === obj.id}
-            <button
-              class="delete-btn"
-              type="button"
-              onclick={(e) => {
-                e.stopPropagation();
-                handleDeleteSelected();
-              }}
-              aria-label={`Eliminar ${obj.label ?? obj.type}`}
-            >
-              Eliminar
-            </button>
-          {/if}
-        </article>
-      {/if}
+      <article
+        class={`board-object object-${obj.type} ${uiState.selectedTokenId === obj.id ? 'selected' : ''}`}
+        style={`left:${obj.x}px; top:${obj.y}px; width:${(obj.w ?? 1) * cellSize}px; height:${(obj.h ?? 1) * cellSize}px; background-color: ${obj.color || ''};`}
+        use:makeObjectDraggable={obj.id}
+      >
+        {obj.label ?? obj.type}
+      </article>
     {/each}
   </div>
 
@@ -266,20 +220,6 @@
   .board-object.selected {
     outline: 2px solid #2563eb;
     outline-offset: 2px;
-  }
-
-  .delete-btn {
-    position: absolute;
-    top: -0.55rem;
-    right: -0.55rem;
-    border: 1px solid #b91c1c;
-    background: #ef4444;
-    color: #fff;
-    border-radius: 999px;
-    font-size: 0.625rem;
-    padding: 0.125rem 0.35rem;
-    cursor: pointer;
-    text-transform: none;
   }
 
   .object-wall {
