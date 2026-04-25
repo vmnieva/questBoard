@@ -1,88 +1,23 @@
 <script>
-  import { onDestroy, onMount } from 'svelte';
   import Toolbar from './Toolbar.svelte';
   import {
+    boardState,
     addObject,
-    createBoard,
-    deserialize,
     removeObject,
     clearObjects,
-    serialize,
     updateObject,
-  } from '$lib/services/boardService';
+  } from '$lib/services/boardService.svelte';
 
   let { rows = 12, cols = 16, cellSize = 50 } = $props();
 
-  const STORAGE_KEY = 'questboard.board';
-  const SAVE_THROTTLE_MS = 250;
-
-  let board = $state(createBoard({ rows, cols, cellSize }));
-  let saveTimer = null;
   let selectedObjectId = $state(null);
 
-  let boardWidth = $derived(cols * cellSize);
-  let boardHeight = $derived(rows * cellSize);
-  let gridCells = $derived(Array.from({ length: rows * cols }, (_, index) => index));
-
-  onMount(() => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-
-    if (raw) {
-      try {
-        const parsed = deserialize(raw);
-        if (parsed?.meta && Array.isArray(parsed?.objects)) {
-          board = migrateBoardCoordinates(parsed);
-        }
-      } catch {
-        // ignore malformed data and keep default board
-      }
-    }
-
-    return () => {
-      clearTimeout(saveTimer);
-    };
-  });
-
-  onDestroy(() => {
-    clearTimeout(saveTimer);
-  });
-
-  $effect(() => {
-    if (board) {
-      throttleSave();
-    }
-  });
-
-  function migrateBoardCoordinates(inputBoard) {
-    const unit = inputBoard?.meta?.coordinateUnit ?? 'cell';
-
-    if (unit === 'px') {
-      return inputBoard;
-    }
-
-    return {
-      ...inputBoard,
-      meta: {
-        ...inputBoard.meta,
-        coordinateUnit: 'px',
-      },
-      objects: inputBoard.objects.map((obj) => ({
-        ...obj,
-        x: (obj.x ?? 0) * cellSize,
-        y: (obj.y ?? 0) * cellSize,
-      })),
-    };
-  }
-
-  function throttleSave() {
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      localStorage.setItem(STORAGE_KEY, serialize(board));
-    }, SAVE_THROTTLE_MS);
-  }
+  let boardWidth = $derived((boardState.meta?.cols ?? cols) * (boardState.meta?.cellSize ?? cellSize));
+  let boardHeight = $derived((boardState.meta?.rows ?? rows) * (boardState.meta?.cellSize ?? cellSize));
+  let gridCells = $derived(Array.from({ length: (boardState.meta?.rows ?? rows) * (boardState.meta?.cols ?? cols) }, (_, index) => index));
 
   function getObjectById(objId) {
-    return board.objects.find((obj) => obj.id === objId);
+    return boardState.objects.find((obj) => obj.id === objId);
   }
 
   function clampObjectPosition(obj, rawX, rawY) {
@@ -110,7 +45,7 @@
       Math.round((current.y ?? 0) / cellSize) * cellSize,
     );
 
-    board = updateObject(board, objId, snapped);
+    updateObject(objId, snapped);
   }
 
   function makeObjectDraggable(node, objId) {
@@ -169,7 +104,7 @@
         initialObjY + dy
       );
 
-      board = updateObject(board, objId, next);
+      updateObject(objId, next);
     }
 
     function onPointerUp(e) {
@@ -201,7 +136,7 @@
   }
 
   function handleAddObject(obj) {
-    board = addObject(board, {
+    addObject({
       ...obj,
       x: obj.x ?? 0,
       y: obj.y ?? 0,
@@ -213,12 +148,12 @@
       return;
     }
 
-    board = removeObject(board, selectedObjectId);
+    removeObject(selectedObjectId);
     selectedObjectId = null;
   }
 
   function handleClearAll() {
-    board = clearObjects(board);
+    clearObjects();
     selectedObjectId = null;
   }
 </script>
@@ -236,7 +171,7 @@
       <span class="grid-cell" aria-hidden="true"></span>
     {/each}
 
-    {#each board.objects as obj (obj.id)}
+    {#each boardState.objects as obj (obj.id)}
       <article
         class={`board-object object-${obj.type} ${selectedObjectId === obj.id ? 'selected' : ''}`}
         style={`left:${obj.x}px; top:${obj.y}px; width:${(obj.w ?? 1) * cellSize}px; height:${(obj.h ?? 1) * cellSize}px;`}
