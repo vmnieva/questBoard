@@ -65,8 +65,8 @@ export function createObject(type) {
   return {
     id: uuid(),
     type,
-    x: 150,
-    y: 150,
+    x: 0,
+    y: 0,
     w: 1,
     h: 1,
     color: randomColor,
