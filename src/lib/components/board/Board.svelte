@@ -1,16 +1,17 @@
 <script>
   import Toolbar from './Toolbar.svelte';
+  import Token from './Token.svelte';
   import {
     boardState,
+    uiState,
     addObject,
     removeObject,
     clearObjects,
     updateObject,
+    deselectToken,
   } from '$lib/services/boardService.svelte';
 
   let { rows = 12, cols = 16, cellSize = 50 } = $props();
-
-  let selectedObjectId = $state(null);
 
   let boardWidth = $derived((boardState.meta?.cols ?? cols) * (boardState.meta?.cellSize ?? cellSize));
   let boardHeight = $derived((boardState.meta?.rows ?? rows) * (boardState.meta?.cellSize ?? cellSize));
@@ -71,13 +72,13 @@
       
       // Double tap to select
       if (now - lastTapTime < 300) {
-        selectedObjectId = objId;
+        uiState.selectedTokenId = objId;
       }
       lastTapTime = now;
 
       // Hold to select
       holdTimer = setTimeout(() => {
-        selectedObjectId = objId;
+        uiState.selectedTokenId = objId;
       }, 450);
 
       isDragging = true;
@@ -144,17 +145,17 @@
   }
 
   function handleDeleteSelected() {
-    if (!selectedObjectId) {
+    if (!uiState.selectedTokenId) {
       return;
     }
 
-    removeObject(selectedObjectId);
-    selectedObjectId = null;
+    removeObject(uiState.selectedTokenId);
+    deselectToken();
   }
 
   function handleClearAll() {
     clearObjects();
-    selectedObjectId = null;
+    deselectToken();
   }
 </script>
 
@@ -172,27 +173,46 @@
     {/each}
 
     {#each boardState.objects as obj (obj.id)}
-      <article
-        class={`board-object object-${obj.type} ${selectedObjectId === obj.id ? 'selected' : ''}`}
-        style={`left:${obj.x}px; top:${obj.y}px; width:${(obj.w ?? 1) * cellSize}px; height:${(obj.h ?? 1) * cellSize}px;`}
-        use:makeObjectDraggable={obj.id}
-      >
-        {obj.label ?? obj.type}
-
-        {#if selectedObjectId === obj.id}
+      {#if obj.type === 'token'}
+        <Token token={obj} />
+        
+        {#if uiState.selectedTokenId === obj.id}
           <button
             class="delete-btn"
+            style="top: {obj.y - 10}px; left: {obj.x + 35}px; z-index: 20;"
             type="button"
             onclick={(e) => {
               e.stopPropagation();
               handleDeleteSelected();
             }}
-            aria-label={`Eliminar ${obj.label ?? obj.type}`}
+            aria-label="Eliminar Token"
           >
             Eliminar
           </button>
         {/if}
-      </article>
+      {:else}
+        <article
+          class={`board-object object-${obj.type} ${uiState.selectedTokenId === obj.id ? 'selected' : ''}`}
+          style={`left:${obj.x}px; top:${obj.y}px; width:${(obj.w ?? 1) * cellSize}px; height:${(obj.h ?? 1) * cellSize}px;`}
+          use:makeObjectDraggable={obj.id}
+        >
+          {obj.label ?? obj.type}
+
+          {#if uiState.selectedTokenId === obj.id}
+            <button
+              class="delete-btn"
+              type="button"
+              onclick={(e) => {
+                e.stopPropagation();
+                handleDeleteSelected();
+              }}
+              aria-label={`Eliminar ${obj.label ?? obj.type}`}
+            >
+              Eliminar
+            </button>
+          {/if}
+        </article>
+      {/if}
     {/each}
   </div>
 

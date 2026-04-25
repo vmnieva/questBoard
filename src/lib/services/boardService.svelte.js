@@ -44,6 +44,19 @@ export const boardState = $state(rawData);
 
 let saveTimer = null;
 
+// UI State (no persistente)
+export const uiState = $state({
+  selectedTokenId: null
+});
+
+export function selectToken(id) {
+  uiState.selectedTokenId = id;
+}
+
+export function deselectToken() {
+  uiState.selectedTokenId = null;
+}
+
 function throttleSave() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
