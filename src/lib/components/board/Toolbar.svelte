@@ -18,7 +18,7 @@
   {/each}
 
   <button type="button" class="tool-btn clear-btn" onclick={onClear}>
-    Limpiar All
+    Limpiar Tablero
   </button>
 </nav>
 
@@ -56,7 +56,7 @@
     border-color: #ef4444;
     color: #ef4444;
   }
-  
+
   .clear-btn:hover {
     background: #fef2f2;
   }
