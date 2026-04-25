@@ -1,17 +1,26 @@
 <script>
-  import { uiState, boardState, deselectToken, removeObject } from '$lib/services/boardService.svelte';
-  
+  import {
+    uiState,
+    boardState,
+    deselectToken,
+    removeObject,
+  } from '$lib/services/boardService.svelte';
+
   // Derivamos el objeto actual (ficha, muro, puerta o nota)
   let selectedToken = $derived(
-    boardState.objects.find(obj => obj.id === uiState.selectedTokenId)
+    boardState.objects.find((obj) => obj.id === uiState.selectedTokenId),
   );
 
   function getDefaultColor(type) {
     switch (type) {
-      case 'wall': return '#334155';
-      case 'door': return '#b45309';
-      case 'note': return '#fef08a';
-      default: return '#1d4ed8'; // default token color
+      case 'wall':
+        return '#334155';
+      case 'door':
+        return '#b45309';
+      case 'note':
+        return '#fef08a';
+      default:
+        return '#1d4ed8'; // default token color
     }
   }
 
@@ -30,7 +39,12 @@
   <aside class="token-editor-sheet" aria-label="Token editor">
     <div class="sheet-header">
       <h3>Editar Ficha</h3>
-      <button type="button" class="close-btn" onclick={deselectToken} aria-label="Cerrar panel">
+      <button
+        type="button"
+        class="close-btn"
+        onclick={deselectToken}
+        aria-label="Cerrar panel"
+      >
         &times;
       </button>
     </div>
@@ -39,10 +53,10 @@
       <div class="field">
         <label for="token-label">Iniciales</label>
         <!-- Bind bidireccional reactivo. Actualizarlo fuerza el autoguardado de Svelte 5 -->
-        <input 
+        <input
           id="token-label"
-          type="text" 
-          maxlength="3" 
+          type="text"
+          maxlength="3"
           bind:value={selectedToken.label}
           placeholder="Ej: P1"
           autocomplete="off"
@@ -52,11 +66,11 @@
       <div class="field">
         <label for="token-color">Color de Base</label>
         <div class="color-picker-wrapper">
-          <input 
+          <input
             id="token-color"
-            type="color" 
+            type="color"
             value={selectedToken.color || getDefaultColor(selectedToken.type)}
-            oninput={(e) => selectedToken.color = e.currentTarget.value}
+            oninput={(e) => (selectedToken.color = e.currentTarget.value)}
           />
           <span class="color-hex">{selectedToken.color || 'Defecto'}</span>
         </div>
@@ -155,7 +169,7 @@
     font-weight: 700;
   }
 
-  .field input[type="text"] {
+  .field input[type='text'] {
     width: 100%;
     padding: 0.875rem;
     border: 2px solid #e2e8f0;
@@ -170,7 +184,7 @@
     box-sizing: border-box;
   }
 
-  .field input[type="text"]:focus {
+  .field input[type='text']:focus {
     outline: none;
     border-color: #3b82f6;
     background: #ffffff;
@@ -188,7 +202,7 @@
     box-sizing: border-box;
   }
 
-  .field input[type="color"] {
+  .field input[type='color'] {
     width: 2.75rem;
     height: 2.75rem;
     padding: 0;
@@ -197,15 +211,15 @@
     cursor: pointer;
     background: transparent;
   }
-  
-  .field input[type="color"]::-webkit-color-swatch-wrapper {
+
+  .field input[type='color']::-webkit-color-swatch-wrapper {
     padding: 0;
   }
-  
-  .field input[type="color"]::-webkit-color-swatch {
+
+  .field input[type='color']::-webkit-color-swatch {
     border: none;
     border-radius: 0.5rem;
-    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
   }
 
   .color-hex {

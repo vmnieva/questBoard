@@ -8,6 +8,7 @@
     clearObjects,
     updateObject,
     deselectToken,
+    selectToken,
   } from '$lib/services/boardService.svelte';
 
   let { rows = 11, cols = 15, cellSize = 50 } = $props();
@@ -59,11 +60,12 @@
     let isDragging = false;
     let startX = 0;
     let startY = 0;
+    let lastX = 0;
+    let lastY = 0;
     let initialObjX = 0;
     let initialObjY = 0;
-
-    let tapCount = 0;
-    let tapTimer = null;
+    
+    let lastTapTime = 0;
 
     function onPointerDown(e) {
       if (!e.isPrimary) return;
@@ -77,12 +79,17 @@
       isDragging = true;
       startX = e.clientX;
       startY = e.clientY;
+      lastX = e.clientX;
+      lastY = e.clientY;
       initialObjX = obj.x ?? 0;
       initialObjY = obj.y ?? 0;
     }
 
     function onPointerMove(e) {
       if (!isDragging) return;
+
+      lastX = e.clientX;
+      lastY = e.clientY;
 
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
@@ -106,21 +113,22 @@
         }
       } catch (err) {}
 
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
+      snapToGrid(objId);
 
-      if (Math.abs(dx) <= 3 && Math.abs(dy) <= 3) {
-        tapCount++;
-        if (tapCount === 1) {
-          tapTimer = setTimeout(() => (tapCount = 0), 300);
-        } else if (tapCount === 2) {
-          clearTimeout(tapTimer);
-          tapCount = 0;
-          uiState.selectedTokenId = objId;
+      // Detect tap vs drag
+      const distanceX = Math.abs(e.clientX - startX);
+      const distanceY = Math.abs(e.clientY - startY);
+
+      if (distanceX <= 5 && distanceY <= 5) {
+        const now = Date.now();
+        if (now - lastTapTime < 500) {
+          // Es un doble tap / click
+          selectToken(objId);
+          lastTapTime = 0; // Resetear para evitar triples taps
+        } else {
+          lastTapTime = now;
         }
       }
-
-      snapToGrid(objId);
     }
 
     node.addEventListener('pointerdown', onPointerDown);
@@ -134,7 +142,6 @@
         node.removeEventListener('pointermove', onPointerMove);
         node.removeEventListener('pointerup', onPointerUp);
         node.removeEventListener('pointercancel', onPointerUp);
-        clearTimeout(tapTimer);
       },
     };
   }
@@ -171,6 +178,7 @@
         class={`board-object object-${obj.type} ${uiState.selectedTokenId === obj.id ? 'selected' : ''}`}
         style={`left:${obj.x}px; top:${obj.y}px; width:${(obj.w ?? 1) * effectiveCellSize}px; height:${(obj.h ?? 1) * effectiveCellSize}px; background-color: ${obj.color || ''};`}
         use:makeObjectDraggable={obj.id}
+        aria-label={`Ficha ${obj.label ?? obj.type}`}
       >
         {obj.label ?? obj.type}
       </article>
