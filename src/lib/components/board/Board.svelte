@@ -1,5 +1,6 @@
 <script>
   import Toolbar from './Toolbar.svelte';
+  import { i18n } from '$lib/services/i18nService.svelte.js';
   import {
     boardState,
     uiState,
@@ -178,9 +179,9 @@
         class={`board-object object-${obj.type} ${uiState.selectedTokenId === obj.id ? 'selected' : ''}`}
         style={`left:${obj.x}px; top:${obj.y}px; width:${(obj.w ?? 1) * effectiveCellSize}px; height:${(obj.h ?? 1) * effectiveCellSize}px; background-color: ${obj.color || ''};`}
         use:makeObjectDraggable={obj.id}
-        aria-label={`Ficha ${obj.label ?? obj.type}`}
+        aria-label={`${i18n.t('add_token')} ${obj.label ?? i18n.t('add_' + obj.type)}`}
       >
-        {obj.label ?? obj.type}
+        {obj.label ?? i18n.t('add_' + obj.type)}
       </article>
     {/each}
   </div>
