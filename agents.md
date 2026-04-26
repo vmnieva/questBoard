@@ -17,6 +17,7 @@ El foco principal es:
 - NO sobreingeniería ni abstracciones prematuras.
 - NO añadir funcionalidades fuera del MVP sin justificar y consultar primero.
 - NO usar TypeScript (mantener en JavaScript puro).
+- NO harcodeos de texto, siempre que se vaya a añadir texto en una vista, se deberá usar la función t() del servicio de internacionalización i18n.
 - SIEMPRE usar Svelte 5 (Runas: `$state`, `$props`, `$derived`). Nada de sintaxis legacy de Svelte 4.
 
 ## 🛠️ Stack Técnico
@@ -34,7 +35,7 @@ src/
       board/       # Componentes visuales e interactivos del mapa (Board, Token)
       characters/  # Fichas de personaje (micro-fichas)
       ui/          # Componentes reutilizables (Botones, Menús, Modales)
-    services/      # Lógica de negocio y persistencia (storageService)
+    services/      # Lógica de negocio, internacionalización (i18nService) y persistencia (storageService)
     stores/        # Estado global reactivo con Svelte 5 (boardState.svelte.js)
     utils/         # Funciones auxiliares puras (uuid, matemáticas)
     styles/        # Estilos globales (global.css)
