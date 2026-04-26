@@ -5,6 +5,7 @@
     deselectToken,
     removeObject,
   } from '$lib/services/boardService.svelte.js';
+  import { i18n } from '$lib/services/i18nService.svelte.js';
 
   // Derivamos el objeto actual (ficha, muro, puerta o nota)
   let selectedToken = $derived(
@@ -38,12 +39,12 @@
 
   <aside class="token-editor-sheet" aria-label="Token editor">
     <div class="sheet-header">
-      <h3>Editar Ficha</h3>
+      <h3>{i18n.t('edit_token')}</h3>
       <button
         type="button"
         class="close-btn"
         onclick={deselectToken}
-        aria-label="Cerrar panel"
+        aria-label={i18n.t('close_panel')}
       >
         &times;
       </button>
@@ -51,20 +52,20 @@
 
     <div class="sheet-body">
       <div class="field">
-        <label for="token-label">Iniciales</label>
+        <label for="token-label">{i18n.t('initials')}</label>
         <!-- Bind bidireccional reactivo. Actualizarlo fuerza el autoguardado de Svelte 5 -->
         <input
           id="token-label"
           type="text"
           maxlength="3"
           bind:value={selectedToken.label}
-          placeholder="Ej: P1"
+          placeholder={i18n.t('eg_p1')}
           autocomplete="off"
         />
       </div>
 
       <div class="field">
-        <label for="token-color">Color de Base</label>
+        <label for="token-color">{i18n.t('base_color')}</label>
         <div class="color-picker-wrapper">
           <input
             id="token-color"
@@ -72,13 +73,13 @@
             value={selectedToken.color || getDefaultColor(selectedToken.type)}
             oninput={(e) => (selectedToken.color = e.currentTarget.value)}
           />
-          <span class="color-hex">{selectedToken.color || 'Defecto'}</span>
+          <span class="color-hex">{selectedToken.color || i18n.t('default_color')}</span>
         </div>
       </div>
     </div>
 
     <button type="button" class="delete-full-btn" onclick={handleDelete}>
-      🗑️ Eliminar Ficha
+      🗑️ {i18n.t('delete_token')}
     </button>
   </aside>
 {/if}

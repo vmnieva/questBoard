@@ -1,12 +1,13 @@
 <script>
   import { resolve } from '$app/paths';
+  import { i18n } from '$lib/services/i18nService.svelte.js';
 </script>
 
 <main class="container home">
   <h1>QuestBoard</h1>
-  <p>Prueba el editor del tablero desde la ruta dedicada.</p>
+  <p>{i18n.t('home_description')}</p>
 
-  <a class="cta" href={resolve('/tablero')}>Ir al editor</a>
+  <a class="cta" href={resolve('/tablero')}>{i18n.t('go_to_editor')}</a>
 </main>
 
 <style>
