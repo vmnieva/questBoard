@@ -1,5 +1,6 @@
 <script>
   import { createObject } from '$lib/services/boardService.svelte.js';
+  import { i18n } from '$lib/services/i18nService.svelte.js';
 
   let { onAdd, onClear } = $props();
 
@@ -28,22 +29,22 @@
 <nav class="toolbar" aria-label="Board toolbar">
   {#each TOOL_TYPES as type (type)}
     <button type="button" class="tool-btn" onclick={() => handleAdd(type)}>
-      {type[0].toUpperCase() + type.slice(1)}
+      {i18n.t('add_' + type)}
     </button>
   {/each}
 
   <button type="button" class="tool-btn clear-btn" onclick={handleClearClick}>
-    Limpiar Tablero
+    {i18n.t('clear_board')}
   </button>
 </nav>
 
 {#if showConfirmClear}
   <div class="confirm-backdrop" onpointerdown={cancelClear} aria-hidden="true"></div>
   <div class="confirm-dialog" role="alertdialog">
-    <p>¿Seguro que quieres borrar todas las fichas?</p>
+    <p>{i18n.t('confirm_clear')}</p>
     <div class="confirm-actions">
-      <button type="button" class="dialog-btn cancel-btn" onclick={cancelClear}>No</button>
-      <button type="button" class="dialog-btn confirm-btn" onclick={confirmClear}>Sí</button>
+      <button type="button" class="dialog-btn cancel-btn" onclick={cancelClear}>{i18n.t('no')}</button>
+      <button type="button" class="dialog-btn confirm-btn" onclick={confirmClear}>{i18n.t('yes')}</button>
     </div>
   </div>
 {/if}

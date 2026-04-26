@@ -1,38 +1,38 @@
-# sv
+# QuestBoard 🎲
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+QuestBoard es una aplicación web *móvil-first* diseñada para ayudar a un Game Master (Director de Juego) a crear y gestionar tableros y fichas de personaje para partidas de rol rápidas (one-shots) con la mínima fricción posible.
 
-## Creating a project
+## 🎯 Características Principales
 
-If you're seeing this, you've probably already done this step. Congrats!
+- **Fricción cero**: Sin registro, sin servidores ni bases de datos. Todo ocurre en tu navegador.
+- **Mobile-First**: Pensado y optimizado para ser usado en dispositivos móviles de manera táctil durante la partida.
+- **Rápido y Fluido**: Animaciones a 60fps usando transformaciones CSS nativas y `PointerEvents` para el arrastre de elementos.
+- **Persistencia Local**: Tu tablero, fichas y estado se guardan automáticamente en el `localStorage` de tu dispositivo.
+- **Multi-idioma**: Soporte para inglés y español (i18n ligero nativo en Svelte 5).
 
-```sh
-# create a new project in the current directory
-npx sv create
+## 🛠️ Stack Tecnológico
 
-# create a new project in my-app
-npx sv create my-app
-```
+- **Framework**: [SvelteKit 2](https://kit.svelte.dev/) con [Svelte 5](https://svelte.dev/) (uso extensivo de Runas: `$state`, `$props`, `$derived`).
+- **Lenguaje**: JavaScript.
+- **Estilos**: Vanilla CSS.
 
-## Developing
+## 🚀 Desarrollo Local
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Para ejecutar este proyecto en tu máquina:
 
-```sh
-npm run dev
+1. Instala las dependencias:
+   ```sh
+   npm install
+   ```
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+2. Inicia el servidor de desarrollo:
+   ```sh
+   npm run dev
+   ```
 
-## Building
+3. Abre `http://localhost:5173` en tu navegador. Para usar el tablero directamente navega a `/tablero`.
 
-To create a production version of your app:
+## 📜 Licencia
 
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+Este proyecto está bajo la [Licencia MIT](./LICENSE).
+Copyright (c) 2026 Victor Manuel Nieva Sanchez.
