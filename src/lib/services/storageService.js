@@ -1,4 +1,5 @@
 export function load(key, fallback) {
+  if (typeof localStorage === 'undefined') return fallback;
   try {
     const item = localStorage.getItem(key);
     return item ? JSON.parse(item) : fallback;
@@ -9,6 +10,7 @@ export function load(key, fallback) {
 }
 
 export function save(key, data) {
+  if (typeof localStorage === 'undefined') return;
   try {
     localStorage.setItem(key, JSON.stringify(data));
   } catch (error) {

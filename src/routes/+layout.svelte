@@ -2,6 +2,7 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import { i18n } from '$lib/services/i18nService.svelte.js';
 	import { onMount } from 'svelte';
+	import AppFooter from '$lib/components/ui/AppFooter.svelte';
 
 	let { children } = $props();
 
@@ -15,3 +16,5 @@
 </svelte:head>
 
 {@render children()}
+
+<AppFooter />
