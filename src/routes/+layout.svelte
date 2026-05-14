@@ -3,6 +3,7 @@
 	import { i18n } from '$lib/services/i18nService.svelte.js';
 	import { onMount } from 'svelte';
 	import AppFooter from '$lib/components/ui/AppFooter.svelte';
+	import '$lib/styles/global.css';
 
 	let { children } = $props();
 

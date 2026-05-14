@@ -161,45 +161,63 @@
   }
 </script>
 
-<section
-  class="board-shell"
-  style={`--board-width:${boardWidth}px; --board-height:${boardHeight}px; --cell:${cellSize}px;`}
->
-  <div
-    class="board-grid"
-    style={`grid-template-columns: repeat(${effectiveCols}, ${effectiveCellSize}px); grid-template-rows: repeat(${effectiveRows}, ${effectiveCellSize}px);`}
-    aria-label="Grid board"
+<div class="board-wrapper">
+  <section
+    class="board-shell card"
+    style={`--board-width:${boardWidth}px; --board-height:${boardHeight}px; --cell:${cellSize}px;`}
   >
-    {#each gridCells as index (index)}
-      <span class="grid-cell" aria-hidden="true"></span>
-    {/each}
+    <div
+      class="board-grid"
+      style={`grid-template-columns: repeat(${effectiveCols}, ${effectiveCellSize}px); grid-template-rows: repeat(${effectiveRows}, ${effectiveCellSize}px);`}
+      aria-label="Grid board"
+    >
+      {#each gridCells as index (index)}
+        <span class="grid-cell" aria-hidden="true"></span>
+      {/each}
 
-    {#each boardState.objects as obj (obj.id)}
-      <article
-        class={`board-object object-${obj.type} ${uiState.selectedTokenId === obj.id ? 'selected' : ''}`}
-        style={`left:${obj.x}px; top:${obj.y}px; width:${(obj.w ?? 1) * effectiveCellSize}px; height:${(obj.h ?? 1) * effectiveCellSize}px; background-color: ${obj.color || ''};`}
-        use:makeObjectDraggable={obj.id}
-        aria-label={`${i18n.t('add_token')} ${obj.label ?? i18n.t('add_' + obj.type)}`}
-      >
-        {obj.label ?? i18n.t('add_' + obj.type)}
-      </article>
-    {/each}
-  </div>
+      {#each boardState.objects as obj (obj.id)}
+        <article
+          class={`board-object object-${obj.type} ${uiState.selectedTokenId === obj.id ? 'selected' : ''}`}
+          style={`left:${obj.x}px; top:${obj.y}px; width:${(obj.w ?? 1) * effectiveCellSize}px; height:${(obj.h ?? 1) * effectiveCellSize}px; background-color: ${obj.color || ''};`}
+          use:makeObjectDraggable={obj.id}
+          aria-label={`${i18n.t('add_token')} ${obj.label ?? i18n.t('add_' + obj.type)}`}
+        >
+          {obj.label ?? i18n.t('add_' + obj.type)}
+        </article>
+      {/each}
+    </div>
+
+    <!-- Mock zoom controls for visual fidelity -->
+    <div class="zoom-controls">
+      <button class="zoom-btn" type="button" aria-label="Zoom in">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      </button>
+      <button class="zoom-btn" type="button" aria-label="Zoom out">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      </button>
+    </div>
+  </section>
 
   <Toolbar onAdd={handleAddObject} onClear={handleClearAll} />
-</section>
+</div>
 
 <style>
+  .board-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+  }
+
   .board-shell {
     position: relative;
-    width: calc(var(--board-width) + 0.25rem);
-    max-width: 100%;
-    min-height: calc(var(--board-height) + 4rem);
-    padding: 1rem 1rem 1rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 1rem;
-    background: #ffffff;
+    width: 100%;
+    min-height: 300px;
+    padding: 0;
     overflow: auto;
+    /* Redefine card to have no padding for the map area */
+    border-radius: var(--radius-card);
+    border: 1px solid var(--color-border);
   }
 
   .board-grid {
@@ -208,14 +226,15 @@
     width: var(--board-width);
     height: var(--board-height);
     display: grid;
-    border: 1px solid #d5dde9;
-    background: #f8fafc;
+    background: #ffffff;
     touch-action: none;
+    margin: 1.5rem; /* Space inside the shell */
+    border: 1px solid var(--color-border);
   }
 
   .grid-cell {
-    border-right: 1px solid #e2e8f0;
-    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
   }
 
   .board-object {
@@ -226,37 +245,68 @@
     border-radius: 0.375rem;
     border: 1px solid transparent;
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: capitalize;
     user-select: none;
     touch-action: none;
-    /* Reducimos su tamaño visual de forma centrada */
     transform: scale(0.97);
+    box-shadow: var(--shadow-soft);
   }
 
   .board-object.selected {
-    outline: 2px solid #2563eb;
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
 
   .object-wall {
-    background: #334155;
-    color: #f8fafc;
+    background: #3a302a;
+    color: #faf5ee;
   }
 
   .object-door {
-    background: #b45309;
-    color: #fffbeb;
+    background: #c2652a;
+    color: #faf5ee;
   }
 
   .object-token {
-    background: #1d4ed8;
-    color: #eff6ff;
-    border-radius: 999px;
+    background: #8c3c3c;
+    color: #faf5ee;
+    border-radius: 50%;
   }
 
   .object-note {
-    background: #fef08a;
-    color: #713f12;
+    background: #e2dcd2;
+    color: #3a302a;
+  }
+
+  .zoom-controls {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-soft);
+    padding: 0.25rem;
+    z-index: 10;
+  }
+
+  .zoom-btn {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-main);
+    border-radius: 50%;
+    background: transparent;
+    transition: background 0.2s;
+  }
+
+  .zoom-btn:hover {
+    background: var(--color-bg);
   }
 </style>
