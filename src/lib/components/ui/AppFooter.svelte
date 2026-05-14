@@ -16,7 +16,7 @@
     padding: 0.5rem;
     font-size: 0.75rem;
     font-weight: 500;
-    color: rgba(15, 23, 42, 0.6); /* Slate 900, más oscuro para contrastar */
+    color: var(--color-text-muted); /* Sahara design muted text */
     z-index: 100; /* Asegurar que se renderice por encima de otros contenedores */
     pointer-events: none; /* No interfiere con clics */
   }
