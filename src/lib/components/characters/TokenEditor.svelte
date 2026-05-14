@@ -91,7 +91,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(15, 23, 42, 0.4); /* Slate 900 semi-transparent */
+    background: rgba(58, 48, 42, 0.4); /* Sahara dark transparent */
     z-index: 40;
     backdrop-filter: blur(2px);
     animation: fadeIn 0.2s ease-out;
@@ -102,42 +102,45 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    background: #ffffff;
+    background: var(--color-surface);
     border-radius: 1.5rem 1.5rem 0 0;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
-    z-index: 50;
-    padding: 1.5rem 1.5rem 2.5rem 1.5rem; /* Extra padding at bottom for mobile safe area */
+    box-shadow: var(--shadow-soft);
+    z-index: 150; /* Ensure above BottomNav */
+    padding: 1.5rem 1.5rem 2.5rem 1.5rem;
     animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
     box-sizing: border-box;
+    border-top: 1px solid var(--color-border);
   }
 
   .sheet-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--color-border);
     padding-bottom: 1rem;
   }
 
   .sheet-header h3 {
     margin: 0;
-    font-size: 1.25rem;
-    color: #0f172a;
-    font-weight: 800;
+    font-family: var(--font-heading);
+    font-style: italic;
+    font-size: 1.5rem;
+    color: var(--color-text-main);
+    font-weight: 500;
   }
 
   .close-btn {
-    background: #f1f5f9;
-    border: none;
+    background: transparent;
+    border: 1px solid var(--color-border);
     font-size: 1.5rem;
     line-height: 1;
     width: 2.25rem;
     height: 2.25rem;
     border-radius: 50%;
-    color: #64748b;
+    color: var(--color-text-muted);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -146,8 +149,8 @@
   }
 
   .close-btn:hover {
-    background: #e2e8f0;
-    color: #0f172a;
+    background: var(--color-bg);
+    color: var(--color-text-main);
     transform: scale(1.05);
   }
 
@@ -166,30 +169,28 @@
 
   .field label {
     font-size: 0.875rem;
-    color: #475569;
+    color: var(--color-text-muted);
     font-weight: 700;
   }
 
   .field input[type='text'] {
     width: 100%;
     padding: 0.875rem;
-    border: 2px solid #e2e8f0;
-    border-radius: 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-btn);
     font-size: 1.125rem;
     text-align: center;
     text-transform: uppercase;
     font-weight: 800;
-    color: #0f172a;
-    background: #f8fafc;
+    color: var(--color-text-main);
+    background: var(--color-surface);
     transition: all 0.2s;
     box-sizing: border-box;
   }
 
   .field input[type='text']:focus {
     outline: none;
-    border-color: #3b82f6;
-    background: #ffffff;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    border-color: var(--color-primary);
   }
 
   .color-picker-wrapper {
@@ -197,9 +198,9 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.35rem;
-    border: 2px solid #e2e8f0;
-    border-radius: 0.75rem;
-    background: #f8fafc;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-btn);
+    background: var(--color-surface);
     box-sizing: border-box;
   }
 
@@ -226,7 +227,7 @@
   .color-hex {
     font-family: monospace;
     font-size: 0.95rem;
-    color: #475569;
+    color: var(--color-text-muted);
     font-weight: 600;
     text-transform: uppercase;
   }
@@ -235,12 +236,12 @@
     margin-top: 0.5rem;
     width: 100%;
     padding: 0.875rem;
-    background: #fef2f2;
+    background: transparent;
     color: #ef4444;
-    border: 2px solid #fecaca;
-    border-radius: 0.75rem;
-    font-size: 1.125rem;
-    font-weight: 800;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    border-radius: var(--radius-btn);
+    font-size: 1rem;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
@@ -250,8 +251,8 @@
   }
 
   .delete-full-btn:hover {
-    background: #fee2e2;
-    border-color: #fca5a5;
+    background: rgba(254, 242, 242, 0.5);
+    border-color: #ef4444;
     transform: scale(0.98);
   }
 
