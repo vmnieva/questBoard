@@ -2,9 +2,11 @@ export function load(key, fallback) {
   if (typeof localStorage === 'undefined') return fallback;
   try {
     const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : fallback;
+    if (!item) return fallback;
+    const jsonString = decodeURIComponent(atob(item));
+    return JSON.parse(jsonString);
   } catch (error) {
-    console.error('Failed to load from storage', error);
+    console.warn(`Data for key "${key}" was corrupted or in an old format. Returning fallback.`, error);
     return fallback;
   }
 }
@@ -12,7 +14,9 @@ export function load(key, fallback) {
 export function save(key, data) {
   if (typeof localStorage === 'undefined') return;
   try {
-    localStorage.setItem(key, JSON.stringify(data));
+    const jsonString = JSON.stringify(data);
+    const encodedData = btoa(encodeURIComponent(jsonString));
+    localStorage.setItem(key, encodedData);
   } catch (error) {
     console.error('Failed to save to storage', error);
   }
